@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+require_relative "../lib/donut_dogmatizer"
+
+if ARGV.include?("--donut-ignore")
+  ARGV.delete("--donut-ignore")
+  pp "You have chosen to ignore the dogma of donut... very well..."
+  exit 0
+end
+DonutDogmatizer.new.judge_schema(*ARGV)

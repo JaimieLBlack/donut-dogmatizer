@@ -1,0 +1,12 @@
+- id: donut-dogmatizer
+  name: donut-dogmatizer
+  description: judges your schema
+  entry: donut_dogmatizer
+  language: ruby
+
+- id: donut-dogmatizer-manual
+  name: donut-dogmatizer-manual
+  description: judges your schema
+  entry: donut_dogmatizer --donut-ignore
+  language: ruby
+  stage: [ "manual" ]
