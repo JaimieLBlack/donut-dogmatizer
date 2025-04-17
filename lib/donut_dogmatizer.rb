@@ -78,15 +78,18 @@ class DonutDogmatizer
   def get_change_type(added_lines, removed_lines)
     if removed_lines.length > added_lines.length
       pp "Your changes appear to removed something from a JSON schema. Please ensure the schema version has been updated."
+      pp "Skip this check with SKIP=donut-dogmatizer"
       "removed"
     elsif added_lines.length == removed_lines.length
       pp "Your appear to have changed #{added_lines.length} lines of a JSON schema. Please check if this change is backwards compatible. If it's not, bump the schema version!"
+      pp "Skip this check with SKIP=donut-dogmatizer"
       "changed"
     elsif removed_lines.length == 0
       pp "Your changes appear have only added a new line to the JSON schema. This shouldn't require a version bump!"
       "added"
     else
       pp "You appear to have changed #{removed_lines.length} lines of a JSON schema. Please check if this change is backwards compatible. If it's not, bump the schema version!"
+      pp "Skip this check with SKIP=donut-dogmatizer"
       "changed"
     end
   end
