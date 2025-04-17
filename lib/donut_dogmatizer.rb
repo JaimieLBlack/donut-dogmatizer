@@ -1,6 +1,4 @@
 class DonutDogmatizer
-
-
   $schema_start = /DataPipelineArtifacts::\w*.new\(/
   $schema_end = /\)\n\s*end/
   def judge_schema(*args)
