@@ -4,11 +4,11 @@ class DonutDogmatizer
   def judge_schema(*args)
     relevant_filenames = []
     files_with_artifacts = []
-    for file in args
+    args.each { |file|
       # Check if the file is in a directory starting with "data_pipeline_processors"
       next unless file.include?("/data_pipeline_processors/") && ["spec/", "/helpers/", "base_processor", "orchestrator", "/scripts/"].none? { |exclusion| file.include?(exclusion) }
       relevant_filenames << file
-    end
+    }
 
     return unless relevant_filenames.any?
 
@@ -19,7 +19,6 @@ class DonutDogmatizer
           files_with_artifacts << filename
           schema_start_line = file_content.index($schema_start) + $schema_start.source.length
           function_name = file_content[0..schema_start_line].split("\n").find_all { |line| line =~ /def / }[-1].strip
-          diff_subsections = get_relevant_diffs(filename, [function_name])
           diff = get_entire_diff(filename)
           relevant_diff_sections = get_relevant_diffs(diff, [function_name])
           added_lines, removed_lines = get_only_changed_lines(relevant_diff_sections)
@@ -77,18 +76,18 @@ class DonutDogmatizer
 
   def get_change_type(added_lines, removed_lines)
     if removed_lines.length > added_lines.length
-      pp "Your changes appear to removed something from a JSON schema. Please ensure the schema version has been updated."
+      pp "Your changes appear to removed something from a JSON schema without bumping the schema version. Please update the version schema."
       pp "Skip this check with SKIP=donut-dogmatizer"
       "removed"
     elsif added_lines.length == removed_lines.length
-      pp "Your appear to have changed #{added_lines.length} lines of a JSON schema. Please check if this change is backwards compatible. If it's not, bump the schema version!"
+      pp "Your appear to have changed #{added_lines.length} lines of a JSON schema without bumping the schema version. Please check if this change is backwards compatible. If it's not, bump the schema version!"
       pp "Skip this check with SKIP=donut-dogmatizer"
       "changed"
     elsif removed_lines.length == 0
       pp "Your changes appear have only added a new line to the JSON schema. This shouldn't require a version bump!"
       "added"
     else
-      pp "You appear to have changed #{removed_lines.length} lines of a JSON schema. Please check if this change is backwards compatible. If it's not, bump the schema version!"
+      pp "You appear to have changed #{removed_lines.length} lines of a JSON schema without bumping the schema version. Please check if this change is backwards compatible. If it's not, bump the schema version!"
       pp "Skip this check with SKIP=donut-dogmatizer"
       "changed"
     end
@@ -111,13 +110,17 @@ class DonutDogmatizer
     [added_lines, removed_lines]
   end
   def check_if_version_bumped(diff)
-    # Check if the file has a version bump
-    if diff =~ /def version/
-      version_diff = diff[diff.index(/def version/)...diff.index(/end|@@|def/)]
-      if version_diff && version_diff.match(/\+ *v\d+/) && version_diff.match(/- *v\d+/)
-        added_version = version_diff.match(/\+ *v\d+/).scan(/\d+/).join
-        removed_version = version_diff.match(/- *v\d+/).scan(/\d+/).join
-        if added_version.to_i > removed_version.to_i
+    version_method = /def version/
+    if diff =~ version_method
+      method_index = diff.index(version_method)
+      end_index = diff.index(/end|@@|def/, method_index + version_method.source.length)
+      version_diff = diff[method_index...end_index]
+      if version_diff && version_diff.match(/\+ *('v\d+')|('v\d+')/) && version_diff.match(/- *('v\d+')|('v\d+')/)
+        removed_version = version_diff.match(/- *('v\d+')|('v\d+')/).to_s
+        removed_version_digit = removed_version.scan(/\d+/).join
+        version_diff.gsub!(removed_version, "")
+        added_version_digit = version_diff.match(/\+ *('v\d+')|('v\d+')/).to_s.scan(/\d+/).join
+        if added_version_digit.to_i > removed_version_digit.to_i
           true
         end
       else
