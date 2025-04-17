@@ -20,7 +20,6 @@ class DonutDogmatizer
           schema_start_line = file_content.index($schema_start) + $schema_start.source.length
           function_name = file_content[0..schema_start_line].split("\n").find_all { |line| line =~ /def / }[-1].strip
           diff_subsections = get_relevant_diffs(filename, [function_name])
-          pp diff_subsections
           diff = get_entire_diff(filename)
           relevant_diff_sections = get_relevant_diffs(diff, [function_name])
           added_lines, removed_lines = get_only_changed_lines(relevant_diff_sections)
